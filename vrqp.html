@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>Visualize Redshift Query Plans [EXPERIMENTAL-201902-1]</title>
+
+    <script src="js/lib/jquery/jquery-3.4.1.min.js" type="text/javascript"></script>
+    <script src="js/lib/handlebars/handlebars.min-v4.7.2.js" type="text/javascript"></script>
+    <link rel="stylesheet" type="text/css" href="css/lib/bootstrap/bootstrap-4.4.1-dist/css/bootstrap.min.css">
+    <script src="css/lib/bootstrap/bootstrap-4.4.1-dist/js/bootstrap.bundle.min.js" type="text/javascript"></script>
+    <link rel="stylesheet" type="text/css" href="css/vrqp.css">
+
+    <script src="js/example_plans.js" type="text/javascript"></script>
+    <script src="js/parser.js" type="text/javascript"></script>
+    <script src="js/analyze.js" type="text/javascript"></script>
+    <script src="js/render.js" type="text/javascript"></script>
+    <script src="js/vrqp.js" type="text/javascript"></script>
+  </head>
+  <body>
+    <div class="container-fluid">
+      <div id="nav" class="row text-center">
+        <div class="col-2">
+          <button id="add-new-plan" type="button" class="btn btn-primary" data-toggle="modal" data-target="#newPlan">New plan</button>
+        </div>
+        <div class="col-8">
+          <div id="analyze-buttons" class="btn-group" role="group">
+            <button id="show-node-confidence" type="button" class="btn btn-secondary">Node confidence</button>
+            <button id="show-slow-nodes" type="button" class="btn btn-secondary">Slow nodes</button>
+            <button id="show-pipeline-blocker" type="button" class="btn btn-secondary">Pipeline blocker</button>
+          </div>
+        </div>
+        <div class="col-2"></div>
+      </div>
+
+      <div class="row">
+        <div class="col-12">
+          <div id="query-plan" class="tree"></div>
+        </div>
+      </div>
+    </div>
+
+
+    <div class="modal fade" id="newPlan" data-backdrop="static" tabindex="-1" role="dialog">
+      <div class="modal-dialog modal-xl" role="document">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="staticBackdropLabel">EXPLAIN output</h5>
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+              <span aria-hidden="true">&times;</span>
+            </button>
+          </div>
+          <div class="modal-body">
+            <div id="example-select"></div>
+            <textarea class="form-control" id="explain-output" rows="20"></textarea>
+          </div>
+          <div class="modal-footer">
+            <button id="visualize" type="button" class="btn btn-primary" data-dismiss="modal">Visualize</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

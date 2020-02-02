@@ -1,0 +1,124 @@
+body {
+    background: #FCFCFC;
+    color: #333333;
+}
+
+.confidence-4 {
+    color: #1a9641;
+}
+.confidence-3 {
+    color: #000000;
+}
+.confidence-2 {
+    color: #ffffbf;
+}
+.confidence-1 {
+    color: #d7191c;
+}
+
+#nav {
+    z-index: 100;
+}
+
+#query-plan {
+    z-index: 100;
+    margin-left: 32px;
+}
+
+*, *:before, *:after {
+    box-sizing: border-box;
+}
+.branch {
+    position: relative;
+    margin-left: 250px;
+}
+.branch:before {
+    position: absolute;
+    left: -100px;
+    top: 50%;
+    width: 50px;
+    margin-top: 8px;
+    border-top: 2px solid #77A6B6;
+    content: "";
+}
+
+.node {
+    position: relative;
+    min-height: 128px;
+}
+.node:before {
+    position: absolute;
+    left: -50px;
+    transform: translate(0, 8px);
+    border-left: 2px solid #77A6B6;
+    content: "";
+}
+.node:after {
+    position: absolute;
+    left: -50px;
+    top: 50%;
+    width: 50px;
+    margin-top: 8px;
+    border-top: 2px solid #77A6B6;
+    content: "";
+}
+.node:first-child:before {
+    height: 50%;
+    top: 50%;
+    width: 10px;
+    margin-top: 2px;
+    border-radius: 10px 0 0 0;
+}
+.node:first-child:after {
+    height: 10px;
+    border-radius: 10px 0 0 0;
+}
+.node:last-child:before {
+    height: 50%;
+    width: 10px;
+    border-radius: 0 0 0 10px;
+}
+.node:last-child:after {
+    height: 10px;
+    margin-top: 0px;
+    border-top: none;
+    border-bottom: 2px solid #77A6B6;
+    border-radius: 0 0 0 10px;
+}
+.node.only-child:before {
+    display: none;
+}
+.node.only-child:after {
+    height: 0;
+    width: 50px;
+    margin-top: 8px;
+    border-radius: 0;
+}
+
+.operator {
+    z-index: 100;
+    position: absolute;
+    top: 50%;
+    margin-top: -15px;
+
+    cursor: pointer;
+    min-width: 150px;
+    max-width: 150px;
+    min-height: 50px;
+    max-height: 50px;
+    padding: 4px 4px;
+
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    line-height: normal;
+
+    background: rgba(51, 51, 51, 0.3);
+    border: 2px solid #77A6B6;
+    border-radius: 4px;
+}
+
+.operator-info {
+    font-size: 0.75em;
+}
