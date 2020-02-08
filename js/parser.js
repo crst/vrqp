@@ -71,46 +71,45 @@ var is_operator = function (step) {
 };
 
 // Redshift operators
-// Does not work in Firefox yet, due to https://github.com/tc39/proposal-regexp-named-groups
-var R_SEQ_SCAN = /XN\s+(?<op>Seq\s+Scan)\s+on\s+(?<relation>\w+)/i;
-var R_JOIN = /XN\s+(?<op>Nested\s+Loop|Hash\s+Join|Hash\s+NOT\s+IN\sJoin|Merge\s+Join)(\s+)(?<dist>\w+)/i;
-var R_HASH = /XN\s+(?<op>Hash$)/i;
-var R_AGGR = /XN\s+(?<op>Aggregate$|HashAggregate|GroupAggregate)/i;
-var R_SORT = /XN\s+(?<op>Merge$|Sort$)/i;
-var R_SUBQUERY = /XN\s+(?<op>Subquery\s+Scan)\s+"*(?<relation>[^"(]+)/i;
-var R_APPEND = /XN\s+(?<op>Append)/i;
-var R_INTERSECT = /XN\s(?<op>Hash\s+Intersect\s+Distinct)(\s+)(?<dist>\w+)/i;
-var R_EXCEPT = /XN\s+(?<op>SetOp\s+Except)/i;
-var R_UNIQUE = /XN\s+(?<op>Unique)/i;
-var R_LIMIT = /XN\s+(?<op>Limit$)/i;
-var R_WINDOW = /XN\s+(?<op>Window)/i;
-var R_RESULT = /XN\s+(?<op>Result)/i;
+var R_SEQ_SCAN = /XN\s+(Seq\s+Scan)\s+on\s+(\w+)/i;
+var R_JOIN = /XN\s+(Nested\s+Loop|Hash\s+Join|Hash\s+Right\s+Join|Hash\s+NOT\s+IN\sJoin|Merge\s+Join)\s+(\w+)/i;
+var R_HASH = /XN\s+(Hash$)/i;
+var R_AGGR = /XN\s+(Aggregate$|HashAggregate|GroupAggregate)/i;
+var R_SORT = /XN\s+(Merge$|Sort$)/i;
+var R_SUBQUERY = /XN\s+(Subquery\s+Scan)\s+"*([^"(]+)/i;
+var R_APPEND = /XN\s+(Append)/i;
+var R_INTERSECT = /XN\s(Hash\s+Intersect\s+Distinct)\s+(\w+)/i;
+var R_EXCEPT = /XN\s+(SetOp\s+Except)/i;
+var R_UNIQUE = /XN\s+(Unique)/i;
+var R_LIMIT = /XN\s+(Limit$)/i;
+var R_WINDOW = /XN\s+(Window)/i;
+var R_RESULT = /XN\s+(Result)/i;
 //var R_SUBPLAN = /XN/i;
-var R_NETWORK = /XN\s+(?<op>Network$)/i;
-//var R_MATERIALIZE = /XN/i;
+var R_NETWORK = /XN\s+(Network$)/i;
+var R_MATERIALIZE = /XN\s(Materialize)/i;
 // TODO: Spectrum operators
 
-var mk_operator = function (type, parser) {
-    return {'type': type, 'parser': parser};
+var mk_operator = function (type, parser, matches) {
+    return {'type': type, 'parser': parser, 'matches': matches};
 };
 
 var OPERATORS = [
-    mk_operator('SCAN', R_SEQ_SCAN),
-    mk_operator('JOIN', R_JOIN),
-    mk_operator('JOIN_AGGR', R_HASH),
-    mk_operator('AGGR', R_AGGR),
-    mk_operator('SORT', R_SORT),
-    mk_operator('SUBQ', R_SUBQUERY),
-    mk_operator('APND', R_APPEND),
-    mk_operator('INTR', R_INTERSECT),
-    mk_operator('EXCP', R_EXCEPT),
-    mk_operator('UNIQ', R_UNIQUE),
-    mk_operator('LIMT', R_LIMIT),
-    mk_operator('WIND', R_WINDOW),
-    mk_operator('RSLT', R_RESULT),
+    mk_operator('SCAN', R_SEQ_SCAN, ['op', 'relation']),
+    mk_operator('JOIN', R_JOIN, ['op', 'dist']),
+    mk_operator('JOIN_AGGR', R_HASH, ['op']),
+    mk_operator('AGGR', R_AGGR, ['op']),
+    mk_operator('SORT', R_SORT, ['op']),
+    mk_operator('SUBQ', R_SUBQUERY, ['op', 'relation']),
+    mk_operator('APND', R_APPEND, ['op']),
+    mk_operator('INTR', R_INTERSECT, ['op', 'dist']),
+    mk_operator('EXCP', R_EXCEPT, ['op']),
+    mk_operator('UNIQ', R_UNIQUE, ['op']),
+    mk_operator('LIMT', R_LIMIT, ['op']),
+    mk_operator('WIND', R_WINDOW, ['op']),
+    mk_operator('RSLT', R_RESULT, ['op']),
     //R_SUBPLAN,
-    mk_operator('NETW', R_NETWORK),
-    //R_MATERIALIZE
+    mk_operator('NETW', R_NETWORK, ['op']),
+    mk_operator('MTRZ', R_MATERIALIZE, ['op'])
 ];
 
 var parse_operator = function (step) {
@@ -121,8 +120,7 @@ var parse_operator = function (step) {
     var parse_success = false;
     op = op.split('->')[1].trim();
     for (const operator of OPERATORS) {
-        var parser = operator['parser'];
-        let result = match_operator(op, parser);
+        let result = match_operator(op, operator);
         if (result['match']) {
             node['type'] = operator['type'];
             $.extend(node, result['result']);
@@ -147,12 +145,15 @@ var parse_operator = function (step) {
     return node;
 };
 
-var match_operator = function (operator, regex) {
+var match_operator = function (op, operator) {
     var result = {'match': false};
-    var match = operator.match(regex);
+    var match = op.match(operator['parser']);
     if (match) {
         result['match'] = true;
-        result['result'] = match['groups'];
+        result['result'] = {};
+        for (var i=1; i<operator['matches'].length+1; i++) {
+            result['result'][operator['matches'][i-1]] = match[i];
+        }
     }
     return result;
 };

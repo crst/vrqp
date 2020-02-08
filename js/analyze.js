@@ -21,13 +21,14 @@ var analyze_plan = function (tree) {
     for (node_id in tree) {
         var est = tree[node_id]['estimates'];
         est['size-rel'] = (est['rows'] * est['width']) / max_size;
+        est['cost-first-abs-rel'] = est['cost-first-abs'] / total_cost;
         est['cost-last-abs-rel'] = est['cost-last-abs'] / total_cost;
     }
 };
 
 var reset = function (tree) {
     for (node_id in tree) {
-        $('.node-' + node_id)
+        $('.operator.node-' + node_id)
             .css({'opacity': 1})
             .removeClass('confidence-1 confidence-2 confidence-3 confidence-4');
     }
@@ -67,25 +68,21 @@ var show_slow_nodes = function (tree) {
     var total_cost = tree[0]['estimates']['cost-last'];
     for (node_id in tree) {
         var measure = tree[node_id]['estimates']['cost-last-abs-rel'];
-        $('.node-' + node_id).css({'opacity': get_opacity(measure)});
+        $('.operator.node-' + node_id).css({'opacity': get_opacity(measure)});
     }
 };
 
 var show_pipeline_blocker = function (tree) {
-    // A pipeline blocker is an operator which has a small relative cost
-    // difference between first and last result.
+    // A pipeline blocker is an operator with high relative cost for
+    // returning the first row.
     var total_cost = tree[0]['estimates']['cost-last'];
     for (node_id in tree) {
-        var node = tree[node_id];
-
-        var last = node['estimates']['cost-last'];
-        var cost_diff = (last - node['estimates']['cost-first']) / last;
-        var measure = 1 - cost_diff;
-        $('.node-' + node_id).css({'opacity': get_opacity(measure)});
+        var measure = tree[node_id]['estimates']['cost-first-abs-rel'];
+        $('.operator.node-' + node_id).css({'opacity': get_opacity(measure)});
     }
 };
 
 var get_opacity = function (measure) {
     // Avoid invisible nodes.
-    return 0.5 + (measure * 0.5);
+    return 0.2 + (measure * 0.8);
 }

@@ -1,12 +1,13 @@
 var DEV = false;
 
 $(document).ready(function () {
+    render_example_plans();
     if (!DEV) {
-        render_example_plans();
         $('#newPlan').modal('show');
         $('#visualize').click(visualize);
     } else {
         var idx = 5;
+        var idx = parseInt(Math.random() * example_plans.length);
         $('#explain-output').attr('placeholder', example_plans[idx]['plan']);
         visualize();
     }
@@ -33,7 +34,10 @@ var visualize = function () {
         $('#query-plan').html(html);
 
         $(function () {
-            $('[data-toggle="popover"]').popover({'html': true});
+            $('[data-toggle="popover"]').popover({
+                'html': true,
+                'trigger': 'hover click'
+            });
         });
     } catch (err) {
         $('#query-plan').html('Failed to render plan :/');
