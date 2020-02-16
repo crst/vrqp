@@ -32,6 +32,7 @@ var visualize = function () {
         var buffer = [];
         var html = render_plan(plan, plan[0], buffer, 0, true);
         $('#query-plan').html(html);
+        adjust_edges(plan);
 
         $(function () {
             $('[data-toggle="popover"]').popover({

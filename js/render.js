@@ -44,7 +44,6 @@ var render_plan = function (plan, node, buffer, siblings) {
     buffer.push(node_template(ctx));
 
     if (node['children'].length > 0) {
-        // TODO: render edges based on amount of data.
         siblings = node['children'].length > 1;
         buffer.push('<div class="branch">');
         for (const cid of node['children']) {
@@ -101,4 +100,12 @@ var render_mapping = {
     'SUBQ': render_subq_scan,
     'JOIN': render_join,
     'INTR': render_intersect
+};
+
+var adjust_edges = function (plan) {
+    for (let [k, v] of Object.entries(plan)) {
+        var w = Math.round(1 + parseInt(100 * v['estimates']['size-rel']) / 11);
+        $('.node-' + k).parent().addClass('border-' + w + 'b');
+        $('.node-' + k).addClass('border-' + w + 'n');
+    }
 };
