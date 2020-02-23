@@ -11,50 +11,60 @@ $(document).ready(function () {
 `);
 
     node_template = Handlebars.compile(`
-<span class="operator node-{{node.node-id}}" data-toggle="popover" data-placement="top" data-title="{{node.op}}" data-content="{{{meta_info}}}">
+<li id="edge-{{node.node-id}}" class="edge">
+  <span id="node-{{node.node-id}}" class="operator" data-toggle="popover" data-placement="top" data-title="{{node.op}}" data-content="{{{meta_info}}}">
   {{{node_main}}}
 </span>
 `);
 });
 
-var render_plan = function (plan, node, buffer, siblings) {
-    if (node['node-id'] > 0) {
-        var leaf = '';
-        if (!siblings) {
-            leaf = ' only-child';
+var render_plan = function (plan, node, buffer) {
+    // Start a new list for the root node.
+    if (node['node-id'] === 0) {
+        buffer.push('<ul>');
+    }
+
+    // Add the node HTML.
+    var node_html = render_node(node);
+    buffer.push(node_html);
+
+    if (node['children'].length > 0) {
+        // Recursively build sublists.
+        buffer.push('<ul>');
+        for (const cid of node['children']) {
+            var child = plan[cid];
+            render_plan(plan, child, buffer);
         }
-        buffer.push('<div class="node' + leaf + ' node-' + node['node-id'] + '">');
+        buffer.push('</ul>');
     }
 
-    var display = render_operator(node);
-    if (node['type'] in render_mapping) {
-        display = render_mapping[node['type']](node);
+    // Close the item opened via node_html.
+    buffer.push('</li>');
+
+    // Close main list from the root node.
+    if (node['node-id'] === 0 ) {
+        buffer.push('</ul>');
     }
 
+    return buffer.join('');
+};
+
+
+var render_node = function (node) {
+    // Generate node HTML with the operator.
+    var operator_html = render_operator(node);
     var meta_ctx = {
         'node': node,
         'size': get_size(node['estimates']),
         'cost': get_cost(node['estimates'])
     }
-    var ctx = {
+    var node_ctx = {
         'node': node,
-        'node_main': display,
+        'node_main': operator_html,
         'meta_info': meta_template(meta_ctx)
     };
-    buffer.push(node_template(ctx));
-
-    if (node['children'].length > 0) {
-        siblings = node['children'].length > 1;
-        buffer.push('<div class="branch">');
-        for (const cid of node['children']) {
-            var child = plan[cid];
-            render_plan(plan, child, buffer, siblings);
-        }
-        buffer.push('</div>');
-    }
-    buffer.push('</div>');
-
-    return buffer.join('');
+    var node_html = node_template(node_ctx);
+    return node_html;
 };
 
 var get_size = function (estimates) {
@@ -81,19 +91,22 @@ var get_cost = function (estimates) {
 };
 
 var render_seq_scan = function (node) {
-    return node['op'] + '<br><span class="operator-info">:' + node['relation'] + ':</span>';
+    return '<div>' + node['op'] + '</div><div class="operator-info">:' + node['relation'] + ':</div>';
 };
 var render_subq_scan = function (node) {
-    return node['op'] + '<br><span class="operator-info">:' + node['relation'] + ':</span>';
+    return '<div>' + node['op'] + '</div><div class="operator-info">:' + node['relation'] + ':</div>';
 };
 var render_join = function (node) {
-    return node['op'] + '<br><span class="operator-info">:' + node['dist'] + ':</span>';
+    return '<div>' + node['op'] + '</div><div class="operator-info">:' + node['dist'] + ':</div>';
 }
 var render_intersect = function (node) {
-    return node['op'] + '<br><span class="operator-info">:' + node['dist'] + ':</span>';
+    return '<div>' + node['op'] + '</div><div class="operator-info">:' + node['dist'] + ':</div>';
 }
 var render_operator = function (node) {
-    return node['op'];
+    if (node['type'] in render_mapping) {
+        return render_mapping[node['type']](node);
+    }
+    return '<div>' + node['op'] + '</div>';
 }
 var render_mapping = {
     'SCAN': render_seq_scan,
@@ -104,8 +117,12 @@ var render_mapping = {
 
 var adjust_edges = function (plan) {
     for (let [k, v] of Object.entries(plan)) {
-        var w = Math.round(1 + parseInt(100 * v['estimates']['size-rel']) / 11);
-        $('.node-' + k).parent().addClass('border-' + w + 'b');
-        $('.node-' + k).addClass('border-' + w + 'n');
+        // Adjust output edge.
+        var c = Math.round(1 + parseInt(100 * v['estimates']['output-size-rel']) / 11);
+        $('#edge-' + k).addClass('x' + c);
+
+        // Adjust input edge.
+        var c = Math.round(1 + parseInt(100 * v['estimates']['max-input-size-rel']) / 11);
+        $('#node-' + k).addClass('x' + c);
     }
 };

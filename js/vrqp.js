@@ -30,7 +30,7 @@ var visualize = function () {
         $('#show-pipeline-blocker').click(mk_toggle(show_pipeline_blocker, plan));
 
         var buffer = [];
-        var html = render_plan(plan, plan[0], buffer, 0, true);
+        var html = render_plan(plan, plan[0], buffer);
         $('#query-plan').html(html);
         adjust_edges(plan);
 
@@ -41,6 +41,9 @@ var visualize = function () {
             });
         });
     } catch (err) {
+        if (DEV) {
+            console.log(err);
+        }
         $('#query-plan').html('Failed to render plan :/');
     }
 };
@@ -49,7 +52,7 @@ var mk_toggle = function (fn, plan) {
     return function () {
         var was_active = $(this).hasClass('active');
         $('#analyze-buttons > .btn').removeClass('active');
-        reset(plan);
+        reset_nodes();
         if (was_active) {
             $(this).addClass('active');
         }

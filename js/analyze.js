@@ -6,10 +6,12 @@ var analyze_plan = function (tree) {
     // actually accumulated. For now just assuming they simply sum up.
 
     var total_cost = tree[0]['estimates']['cost-last'];
-    var max_size = 0;
+    var max_output_size = 0;
     for (node_id in tree) {
         var node = tree[node_id];
-        var max_size = Math.max(max_size, node['estimates']['rows'] * node['estimates']['width']);
+        var output_size = node['estimates']['rows'] * node['estimates']['width'];
+        var max_output_size = Math.max(max_output_size, output_size);
+        node['estimates']['output-size'] = output_size;
         node['estimates']['cost-first-abs'] = node['estimates']['cost-first'];
         node['estimates']['cost-last-abs'] = node['estimates']['cost-last'];
         for (const child_id of node['children']) {
@@ -18,20 +20,33 @@ var analyze_plan = function (tree) {
             node['estimates']['cost-last-abs'] -= child['estimates']['cost-last'];
         }
     }
+
+    // Normalize values.
     for (node_id in tree) {
         var est = tree[node_id]['estimates'];
-        est['size-rel'] = (est['rows'] * est['width']) / max_size;
+        est['output-size-rel'] = est['output-size'] / max_output_size;
         est['cost-first-abs-rel'] = est['cost-first-abs'] / total_cost;
         est['cost-last-abs-rel'] = est['cost-last-abs'] / total_cost;
+
+        est['max-input-size-rel'] = 0;
+        for (const cid of tree[node_id]['children']) {
+            var tmp = tree[cid]['estimates']['output-size'] / max_output_size;
+            if (tmp > est['max-input-size-rel']) {
+                est['max-input-size-rel'] = tmp;
+            }
+        }
     }
 };
 
-var reset = function (tree) {
-    for (node_id in tree) {
-        $('.operator.node-' + node_id)
-            .css({'opacity': 1})
-            .removeClass('confidence-1 confidence-2 confidence-3 confidence-4');
-    }
+var reset_nodes = function () {
+    $('.operator')
+        .css({'opacity': 1.0})
+        .removeClass('confidence-1 confidence-2 confidence-3 confidence-4');
+}
+var reset_edges = function () {
+    // TODO: not visible from UI yet.
+    $('.edge')
+        .removeClass('x1 x2 x3 x4 x5 x6 x7 x8 x9 x10')
 }
 
 var show_node_confidence = function (tree) {
@@ -59,7 +74,7 @@ var show_node_confidence = function (tree) {
                 confidence = 1;
             }
         }
-        $('span.node-' + node_id).addClass('confidence-' + confidence);
+        $('#node-' + node_id).addClass('confidence-' + confidence);
     }
 }
 
@@ -68,7 +83,7 @@ var show_slow_nodes = function (tree) {
     var total_cost = tree[0]['estimates']['cost-last'];
     for (node_id in tree) {
         var measure = tree[node_id]['estimates']['cost-last-abs-rel'];
-        $('.operator.node-' + node_id).css({'opacity': get_opacity(measure)});
+        $('#node-' + node_id).css({'opacity': get_opacity(measure)});
     }
 };
 
@@ -78,7 +93,7 @@ var show_pipeline_blocker = function (tree) {
     var total_cost = tree[0]['estimates']['cost-last'];
     for (node_id in tree) {
         var measure = tree[node_id]['estimates']['cost-first-abs-rel'];
-        $('.operator.node-' + node_id).css({'opacity': get_opacity(measure)});
+        $('#node-' + node_id).css({'opacity': get_opacity(measure)});
     }
 };
 
