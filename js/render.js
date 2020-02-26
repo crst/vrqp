@@ -2,6 +2,13 @@
 // Rendering is mostly done via CSS, but we need to build container
 // with the tree structure.
 
+var render_plan = function (plan) {
+    var buffer = [];
+    var html = generate_plan_html(plan, plan[0], buffer);
+    var width = get_tree_width(plan);
+    $('#query-plan').css({'width': width}).html(html);
+};
+
 var meta_template, node_template;
 $(document).ready(function () {
     meta_template = Handlebars.compile(`
@@ -14,11 +21,11 @@ $(document).ready(function () {
 <li id="edge-{{node.node-id}}" class="edge">
   <span id="node-{{node.node-id}}" class="operator" data-toggle="popover" data-placement="top" data-title="{{node.op}}" data-content="{{{meta_info}}}">
   {{{node_main}}}
-</span>
+  </span>
 `);
 });
 
-var render_plan = function (plan, node, buffer) {
+var generate_plan_html = function (plan, node, buffer) {
     // Start a new list for the root node.
     if (node['node-id'] === 0) {
         buffer.push('<ul>');
@@ -33,7 +40,7 @@ var render_plan = function (plan, node, buffer) {
         buffer.push('<ul>');
         for (const cid of node['children']) {
             var child = plan[cid];
-            render_plan(plan, child, buffer);
+            generate_plan_html(plan, child, buffer);
         }
         buffer.push('</ul>');
     }
@@ -48,7 +55,6 @@ var render_plan = function (plan, node, buffer) {
 
     return buffer.join('');
 };
-
 
 var render_node = function (node) {
     // Generate node HTML with the operator.
@@ -115,14 +121,10 @@ var render_mapping = {
     'INTR': render_intersect
 };
 
-var adjust_edges = function (plan) {
+var get_tree_width = function (plan) {
+    var width = 1;
     for (let [k, v] of Object.entries(plan)) {
-        // Adjust output edge.
-        var c = Math.round(1 + parseInt(100 * v['estimates']['output-size-rel']) / 11);
-        $('#edge-' + k).addClass('x' + c);
-
-        // Adjust input edge.
-        var c = Math.round(1 + parseInt(100 * v['estimates']['max-input-size-rel']) / 11);
-        $('#node-' + k).addClass('x' + c);
+        width += Math.max(v['children'].length - 1, 0);
     }
+    return width * 392;
 };

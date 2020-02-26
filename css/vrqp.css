@@ -11,7 +11,7 @@ body {
     color: #000000;
 }
 .confidence-2 {
-    color: #ffffbf;
+    color: #fd8d3c;
 }
 .confidence-1 {
     color: #d7191c;
@@ -23,7 +23,7 @@ body {
 
 #query-plan {
     z-index: 100;
-    margin-top: 64px;
+    margin: 64px auto;
 }
 
 .operator {
@@ -65,12 +65,11 @@ body {
     position: absolute;
     content: '';
 
-    left: 50%;
+    left: calc(50% - 8px);
     bottom: -34px;
     height: 32px;
-    transform: translate(-4px, 0px);
 
-    border-left: 4px solid #777777;
+    border-left: 8px solid #777777;
 }
 
 .tree li ul {
@@ -90,14 +89,14 @@ body {
     top: -32px;
     width: 50%;
 
-    border-top: 4px solid #777777;
+    border-top: 8px solid #777777;
 }
 
 .tree li ul li:before {
     left: 50%;
     height: 32px;
 
-    border-left: 4px solid #777777;
+    border-left: 8px solid #777777;
 }
 
 .tree li ul li:after {
@@ -108,7 +107,7 @@ body {
 .tree li ul li:last-child:before {
     top: -32px;
 
-    border-top: 4px solid #777777;
+    border-top: 8px solid #777777;
     border-top-left-radius: 8px;
 }
 
@@ -122,7 +121,7 @@ body {
     right: 50%;
 
     border-left: 0;
-    border-right: 4px solid #777777;
+    border-right: 8px solid #777777;
     border-top-left-radius: 0;
     border-top-right-radius: 8px;
 }

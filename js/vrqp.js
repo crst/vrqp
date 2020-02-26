@@ -4,13 +4,13 @@ $(document).ready(function () {
     render_example_plans();
     if (!DEV) {
         $('#newPlan').modal('show');
-        $('#visualize').click(visualize);
     } else {
         var idx = 5;
         var idx = parseInt(Math.random() * example_plans.length);
         $('#explain-output').attr('placeholder', example_plans[idx]['plan']);
         visualize();
     }
+    $('#visualize').click(visualize);
 });
 
 
@@ -20,19 +20,16 @@ var visualize = function () {
         explain_output = $('#explain-output').attr('placeholder');
     }
 
-
     try {
         var plan = parse_plan(explain_output);
         analyze_plan(plan);
+        render_plan(plan);
 
-        $('#show-node-confidence').click(mk_toggle(show_node_confidence, plan));
-        $('#show-slow-nodes').click(mk_toggle(show_slow_nodes, plan));
-        $('#show-pipeline-blocker').click(mk_toggle(show_pipeline_blocker, plan));
+        $('#show-node-confidence').click(mk_toggle(show_node_confidence, plan, 'nodes')).click();
+        $('#show-slow-nodes').click(mk_toggle(show_slow_nodes, plan, 'nodes'));
+        $('#show-pipeline-blocker').click(mk_toggle(show_pipeline_blocker, plan, 'nodes'));
 
-        var buffer = [];
-        var html = render_plan(plan, plan[0], buffer);
-        $('#query-plan').html(html);
-        adjust_edges(plan);
+        $('#show-data-size').click(mk_toggle(show_data_size, plan, 'edges')).click();
 
         $(function () {
             $('[data-toggle="popover"]').popover({
@@ -48,11 +45,16 @@ var visualize = function () {
     }
 };
 
-var mk_toggle = function (fn, plan) {
+var mk_toggle = function (fn, plan, mode) {
     return function () {
         var was_active = $(this).hasClass('active');
-        $('#analyze-buttons > .btn').removeClass('active');
-        reset_nodes();
+        if (mode === 'nodes') {
+            $('#analyze-nodes > .btn').removeClass('active');
+            reset_nodes();
+        } else if (mode === 'edges') {
+            $('#analyze-edges > .btn').removeClass('active');
+            reset_edges();
+        }
         if (was_active) {
             $(this).addClass('active');
         }

@@ -20,17 +20,22 @@
     <div class="container-fluid">
       <div id="nav" class="row text-center">
         <div class="col-2">
-          <button id="add-new-plan" type="button" class="btn btn-primary" data-toggle="modal" data-target="#newPlan">New plan</button>
+          <button id="add-new-plan" type="button" class="btn btn-sm btn-primary" data-toggle="modal" data-target="#newPlan">New plan</button>
         </div>
         <div class="col-8">
-          <div id="analyze-buttons" class="btn-group" role="group">
-            <button id="show-node-confidence" type="button" class="btn btn-secondary">Node confidence</button>
-            <button id="show-slow-nodes" type="button" class="btn btn-secondary">Slow nodes</button>
-            <button id="show-pipeline-blocker" type="button" class="btn btn-secondary">Pipeline blocker</button>
+          <div class="btn-toolbar justify-content-between" role="toolbar">
+            <div id="analyze-nodes" class="btn-group mr-4" role="group">
+              <button id="show-node-confidence" type="button" class="btn btn-sm btn-secondary">Node confidence</button>
+              <button id="show-slow-nodes" type="button" class="btn btn-sm btn-secondary">Slow nodes</button>
+              <button id="show-pipeline-blocker" type="button" class="btn btn-sm btn-secondary">Pipeline blocker</button>
+            </div>
+            <div id="analyze-edges" class="btn-group mr-4" role="group">
+              <button id="show-data-size" type="button" class="btn btn-sm btn-secondary">Data size</button>
+            </div>
           </div>
         </div>
         <div class="col-2">
-          <a href="doc.html" target="_blank"><button id="doc" type="button" class="btn btn-secondary">Documentation</button></a>
+          <a href="doc.html" target="_blank"><button id="doc" type="button" class="btn btn-sm btn-secondary">Documentation</button></a>
         </div>
       </div>
 
@@ -42,7 +47,7 @@
     </div>
 
 
-    <div class="modal fade" id="newPlan" data-backdrop="static" tabindex="-1" role="dialog">
+    <div class="modal fade" id="newPlan" data-backdrop="true" tabindex="-1" role="dialog">
       <div class="modal-dialog modal-xl" role="document">
         <div class="modal-content">
           <div class="modal-header">

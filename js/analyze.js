@@ -24,13 +24,13 @@ var analyze_plan = function (tree) {
     // Normalize values.
     for (node_id in tree) {
         var est = tree[node_id]['estimates'];
-        est['output-size-rel'] = est['output-size'] / max_output_size;
-        est['cost-first-abs-rel'] = est['cost-first-abs'] / total_cost;
-        est['cost-last-abs-rel'] = est['cost-last-abs'] / total_cost;
+        est['output-size-rel'] = est['output-size'] / Math.max(max_output_size, 0.1);
+        est['cost-first-abs-rel'] = est['cost-first-abs'] / Math.max(total_cost, 0.1);
+        est['cost-last-abs-rel'] = est['cost-last-abs'] / Math.max(total_cost, 0.1);
 
         est['max-input-size-rel'] = 0;
         for (const cid of tree[node_id]['children']) {
-            var tmp = tree[cid]['estimates']['output-size'] / max_output_size;
+            var tmp = tree[cid]['estimates']['output-size'] / Math.max(max_output_size, 0.1);
             if (tmp > est['max-input-size-rel']) {
                 est['max-input-size-rel'] = tmp;
             }
@@ -44,10 +44,12 @@ var reset_nodes = function () {
         .removeClass('confidence-1 confidence-2 confidence-3 confidence-4');
 }
 var reset_edges = function () {
-    // TODO: not visible from UI yet.
-    $('.edge')
+    $('.edge, .operator')
         .removeClass('x1 x2 x3 x4 x5 x6 x7 x8 x9 x10')
 }
+
+// ----------------------------------------------------------------------------
+// Node analysis.
 
 var show_node_confidence = function (tree) {
     // Simple rule based heuristics.
@@ -97,7 +99,23 @@ var show_pipeline_blocker = function (tree) {
     }
 };
 
+
 var get_opacity = function (measure) {
     // Avoid invisible nodes.
     return 0.2 + (measure * 0.8);
-}
+};
+
+// ----------------------------------------------------------------------------
+// Edge analysis.
+
+var show_data_size = function (tree) {
+    for (let [k, v] of Object.entries(tree)) {
+        // Adjust output edge.
+        var c = Math.round(1 + parseInt(100 * v['estimates']['output-size-rel']) / 11);
+        $('#edge-' + k).addClass('x' + c);
+
+        // Adjust input edge.
+        var c = Math.round(1 + parseInt(100 * v['estimates']['max-input-size-rel']) / 11);
+        $('#node-' + k).addClass('x' + c);
+    }
+};
