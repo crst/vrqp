@@ -13,14 +13,14 @@ var meta_template, node_template;
 $(document).ready(function () {
     meta_template = Handlebars.compile(`
 <p>{{#each node.info}} {{this}}<br> {{/each}}</p>
-<p>{{node.estimates.rows}} rows, {{size}}</p>
+<p>{{node.estimates.output-rows}} rows, {{output-size}}</p>
 <p>Relative cost: {{cost}}%</p>
 `);
 
     node_template = Handlebars.compile(`
 <li id="edge-{{node.node-id}}" class="edge">
   <span id="node-{{node.node-id}}" class="operator" data-toggle="popover" data-placement="top" data-title="{{node.op}}" data-content="{{{meta_info}}}">
-  {{{node_main}}}
+    <div class="operator-content">{{{node_main}}}</div>
   </span>
 `);
 });
@@ -61,7 +61,7 @@ var render_node = function (node) {
     var operator_html = render_operator(node);
     var meta_ctx = {
         'node': node,
-        'size': get_size(node['estimates']),
+        'output-size': get_output_size(node['estimates']),
         'cost': get_cost(node['estimates'])
     }
     var node_ctx = {
@@ -73,8 +73,8 @@ var render_node = function (node) {
     return node_html;
 };
 
-var get_size = function (estimates) {
-    var bytes = estimates['rows'] * estimates['width'];
+var get_output_size = function (estimates) {
+    var bytes = estimates['output-rows'] * estimates['output-width'];
 
     var result = {'name': 'bytes', 'value': bytes};
     var ranges = [
@@ -104,16 +104,16 @@ var render_subq_scan = function (node) {
 };
 var render_join = function (node) {
     return '<div>' + node['op'] + '</div><div class="operator-info">:' + node['dist'] + ':</div>';
-}
+};
 var render_intersect = function (node) {
     return '<div>' + node['op'] + '</div><div class="operator-info">:' + node['dist'] + ':</div>';
-}
+};
 var render_operator = function (node) {
     if (node['type'] in render_mapping) {
         return render_mapping[node['type']](node);
     }
     return '<div>' + node['op'] + '</div>';
-}
+};
 var render_mapping = {
     'SCAN': render_seq_scan,
     'SUBQ': render_subq_scan,

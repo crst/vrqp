@@ -138,8 +138,8 @@ var parse_operator = function (step) {
     node['estimates'] = {
         'cost-first': parseFloat(cost.split('=')[1].split('..')[0]),
         'cost-last': parseFloat(cost.split('=')[1].split('..')[1]),
-        'rows': parseInt(rows.split('=')[1]),
-        'width': parseInt(width.split('=')[1])
+        'output-rows': parseInt(rows.split('=')[1]),
+        'output-width': parseInt(width.split('=')[1])
     }
 
     return node;

@@ -25,11 +25,13 @@ var visualize = function () {
         analyze_plan(plan);
         render_plan(plan);
 
-        $('#show-node-confidence').click(mk_toggle(show_node_confidence, plan, 'nodes')).click();
-        $('#show-slow-nodes').click(mk_toggle(show_slow_nodes, plan, 'nodes'));
-        $('#show-pipeline-blocker').click(mk_toggle(show_pipeline_blocker, plan, 'nodes'));
+        $('#show-node-alerts').click(mk_toggle(show_node_alert, plan, 'nodes')).click();
+        $('#show-node-cost').click(mk_toggle(show_node_cost, plan, 'nodes'));
+        $('#show-node-blocker').click(mk_toggle(show_node_blocker, plan, 'nodes'));
 
-        $('#show-data-size').click(mk_toggle(show_data_size, plan, 'edges')).click();
+        $('#show-data-size').click(mk_toggle(show_edge, plan, 'edges', 'size')).click();
+        $('#show-data-rows').click(mk_toggle(show_edge, plan, 'edges', 'rows'));
+        $('#show-data-width').click(mk_toggle(show_edge, plan, 'edges', 'width'));
 
         $(function () {
             $('[data-toggle="popover"]').popover({
@@ -45,7 +47,7 @@ var visualize = function () {
     }
 };
 
-var mk_toggle = function (fn, plan, mode) {
+var mk_toggle = function (fn, plan, mode, highlight) {
     return function () {
         var was_active = $(this).hasClass('active');
         if (mode === 'nodes') {
@@ -61,7 +63,7 @@ var mk_toggle = function (fn, plan, mode) {
 
         $(this).button('toggle');
         if ($(this).hasClass('active')) {
-            fn(plan);
+            fn(plan, highlight);
         }
     };
 };

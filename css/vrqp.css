@@ -4,21 +4,25 @@ body {
     font-family: 'Helvetica';
 }
 
-.confidence-4 {
+.alert-none {}
+.alert-4 {
     color: #1a9641;
 }
-.confidence-3 {
+.alert-3 {
     color: #000000;
 }
-.confidence-2 {
+.alert-2 {
     color: #fd8d3c;
 }
-.confidence-1 {
+.alert-1 {
     color: #d7191c;
 }
 
 #nav {
     z-index: 100;
+}
+#add-new-plan {
+    cursor: pointer;
 }
 
 #query-plan {

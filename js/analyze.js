@@ -1,59 +1,106 @@
+// ----------------------------------------------------------------------------
+// Calculate various additional node and edge measures.
 var analyze_plan = function (tree) {
-    // Calculate "absolute relative" cost of the nodes from the
-    // cumulative or total values.
-    //
-    // TODO: not entirely sure how cost from parallel operations are
-    // actually accumulated. For now just assuming they simply sum up.
 
     var total_cost = tree[0]['estimates']['cost-last'];
-    var max_output_size = 0;
+    var measures = ['size', 'rows', 'width'];
+    var max_values = {};
+    for (const m of measures) { max_values[m] = 0; }
+
+    // First pass: additional measures and max values.
     for (node_id in tree) {
         var node = tree[node_id];
-        var output_size = node['estimates']['rows'] * node['estimates']['width'];
-        var max_output_size = Math.max(max_output_size, output_size);
-        node['estimates']['output-size'] = output_size;
-        node['estimates']['cost-first-abs'] = node['estimates']['cost-first'];
-        node['estimates']['cost-last-abs'] = node['estimates']['cost-last'];
+        var est = node['estimates'];
+
+        // Compute actual data size.
+        var output_size = est['output-rows'] * est['output-width'];
+        est['output-size'] = output_size;
+
+        // Determine max values for each measure, so we can later
+        // compute relative ones.
+        for (const m of measures) {
+            max_values[m] = Math.max(max_values[m], est['output-' + m]);
+        }
+
+        // Since cost measures are cumulative, we need to subtract
+        // cost of the previous nodes to get the actual node cost.
+        // TODO: not entirely sure how cost of parallel operators are
+        // accumulated, but for now assume they simply add up.
+        est['cost-first-abs'] = est['cost-first'];
+        est['cost-last-abs'] = est['cost-last'];
         for (const child_id of node['children']) {
             var child = tree[child_id];
-            node['estimates']['cost-first-abs'] -= child['estimates']['cost-first'];
-            node['estimates']['cost-last-abs'] -= child['estimates']['cost-last'];
+            est['cost-first-abs'] -= child['estimates']['cost-first'];
+            est['cost-last-abs'] -= child['estimates']['cost-last'];
         }
     }
 
-    // Normalize values.
+    // Second pass: normalize values in relation to total ones.
     for (node_id in tree) {
         var est = tree[node_id]['estimates'];
-        est['output-size-rel'] = est['output-size'] / Math.max(max_output_size, 0.1);
-        est['cost-first-abs-rel'] = est['cost-first-abs'] / Math.max(total_cost, 0.1);
-        est['cost-last-abs-rel'] = est['cost-last-abs'] / Math.max(total_cost, 0.1);
 
-        est['max-input-size-rel'] = 0;
-        for (const cid of tree[node_id]['children']) {
-            var tmp = tree[cid]['estimates']['output-size'] / Math.max(max_output_size, 0.1);
-            if (tmp > est['max-input-size-rel']) {
-                est['max-input-size-rel'] = tmp;
+        for (const m of measures) {
+            var max_val = max_values[m];
+            est['output-' + m + '-rel'] = est['output-' + m] / Math.max(max_val, 0.1);
+
+            // Get max input size from previous operators.
+            est['max-input-' + m + '-rel'] = 0;
+            for (const cid of tree[node_id]['children']) {
+                var tmp = tree[cid]['estimates']['output-' + m] / Math.max(max_val, 0.1);
+                if (tmp > est['max-input-' + m + '-rel']) {
+                    est['max-input-' + m + '-rel'] = tmp;
+                }
             }
         }
+
+        est['cost-first-abs-rel'] = est['cost-first-abs'] / Math.max(total_cost, 0.1);
+        est['cost-last-abs-rel'] = est['cost-last-abs'] / Math.max(total_cost, 0.1);
     }
 };
 
+
+// ----------------------------------------------------------------------------
+// UI functions.
+
+var highlight_nodes = function (data) {
+    for (const node of data) {
+        $('#node-' + node['id'] + ' > .operator-content')
+            .addClass('alert-' + node['alert'])
+            .css({'opacity': get_opacity(node['emph'])});
+    }
+};
+
+var highlight_edges = function (data) {
+    for (const node of data) {
+        $('#node-' + node['id']).addClass('x' + node['input-val']);
+        $('#edge-' + node['id']).addClass('x' + node['output-val']);
+    }
+};
+
+var get_opacity = function (measure) {
+    // Avoid invisible nodes.
+    return 0.2 + (measure * 0.8);
+};
+
+
 var reset_nodes = function () {
-    $('.operator')
+    $('.operator-content')
         .css({'opacity': 1.0})
-        .removeClass('confidence-1 confidence-2 confidence-3 confidence-4');
-}
+        .removeClass('alert-none alert-1 alert-2 alert-3 alert-4');
+};
 var reset_edges = function () {
     $('.edge, .operator')
         .removeClass('x1 x2 x3 x4 x5 x6 x7 x8 x9 x10')
-}
+};
+
 
 // ----------------------------------------------------------------------------
 // Node analysis.
 
-var show_node_confidence = function (tree) {
+var show_node_alert = function (tree, highlight) {
     // Simple rule based heuristics.
     // TODO: add more/better heuristics.
+    var highlight_data = [];
     for (node_id in tree) {
         var node = tree[node_id];
         var confidence = 3;
@@ -76,46 +123,45 @@ var show_node_confidence = function (tree) {
                 confidence = 1;
             }
         }
-        $('#node-' + node_id).addClass('confidence-' + confidence);
+        highlight_data.push({'id': node_id, 'alert': confidence, 'emph': 1});
     }
+    highlight_nodes(highlight_data);
 }
 
-var show_slow_nodes = function (tree) {
+var show_node_cost = function (tree, highlight) {
     // A slow node is simply an operator with high absolute cost.
     var total_cost = tree[0]['estimates']['cost-last'];
+    var highlight_data = [];
     for (node_id in tree) {
         var measure = tree[node_id]['estimates']['cost-last-abs-rel'];
-        $('#node-' + node_id).css({'opacity': get_opacity(measure)});
+        highlight_data.push({'id': node_id, 'alert': 'none', 'emph': measure});
     }
+    highlight_nodes(highlight_data);
 };
 
-var show_pipeline_blocker = function (tree) {
+var show_node_blocker = function (tree, highlight) {
     // A pipeline blocker is an operator with high relative cost for
     // returning the first row.
     var total_cost = tree[0]['estimates']['cost-last'];
+    var highlight_data = [];
     for (node_id in tree) {
         var measure = tree[node_id]['estimates']['cost-first-abs-rel'];
-        $('#node-' + node_id).css({'opacity': get_opacity(measure)});
+        highlight_data.push({'id': node_id, 'alert': 'none', 'emph': measure});
     }
+    highlight_nodes(highlight_data);
 };
 
-
-var get_opacity = function (measure) {
-    // Avoid invisible nodes.
-    return 0.2 + (measure * 0.8);
-};
 
 // ----------------------------------------------------------------------------
 // Edge analysis.
 
-var show_data_size = function (tree) {
+var show_edge = function (tree, highlight) {
+    var highlight_data = [];
     for (let [k, v] of Object.entries(tree)) {
-        // Adjust output edge.
-        var c = Math.round(1 + parseInt(100 * v['estimates']['output-size-rel']) / 11);
-        $('#edge-' + k).addClass('x' + c);
+        var input = Math.round(1 + parseInt(100 * v['estimates']['max-input-' + highlight + '-rel']) / 11);
+        var output = Math.round(1 + parseInt(100 * v['estimates']['output-' + highlight + '-rel']) / 11);
 
-        // Adjust input edge.
-        var c = Math.round(1 + parseInt(100 * v['estimates']['max-input-size-rel']) / 11);
-        $('#node-' + k).addClass('x' + c);
+        highlight_data.push({'id': k, 'input-val': input, 'output-val': output});
     }
+    highlight_edges(highlight_data);
 };

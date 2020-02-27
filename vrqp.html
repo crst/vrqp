@@ -2,7 +2,7 @@
 <html lang="en">
   <head>
     <meta charset="utf-8">
-    <title>Visualize Redshift Query Plans [EXPERIMENTAL-201902-3]</title>
+    <title>Visualize Redshift Query Plans [EXPERIMENTAL-201902-4]</title>
 
     <script src="js/lib/jquery/jquery-3.4.1.min.js" type="text/javascript"></script>
     <script src="js/lib/handlebars/handlebars.min-v4.7.2.js" type="text/javascript"></script>
@@ -18,25 +18,37 @@
   </head>
   <body>
     <div class="container-fluid">
-      <div id="nav" class="row text-center">
+      <div class="row text-center">
         <div class="col-2">
-          <button id="add-new-plan" type="button" class="btn btn-sm btn-primary" data-toggle="modal" data-target="#newPlan">New plan</button>
+          <span id="add-new-plan" class="badge  badge-secondary" data-toggle="modal" data-target="#newPlan">New plan</span>
         </div>
-        <div class="col-8">
-          <div class="btn-toolbar justify-content-between" role="toolbar">
-            <div id="analyze-nodes" class="btn-group mr-4" role="group">
-              <button id="show-node-confidence" type="button" class="btn btn-sm btn-secondary">Node confidence</button>
-              <button id="show-slow-nodes" type="button" class="btn btn-sm btn-secondary">Slow nodes</button>
-              <button id="show-pipeline-blocker" type="button" class="btn btn-sm btn-secondary">Pipeline blocker</button>
-            </div>
-            <div id="analyze-edges" class="btn-group mr-4" role="group">
-              <button id="show-data-size" type="button" class="btn btn-sm btn-secondary">Data size</button>
-            </div>
+        <div class="col-4">
+          <span class="badge badge-light">Operator highlight</span>
+        </div>
+        <div class="col-4">
+          <span class="badge badge-light">Data highlight</span>
+        </div>
+        <div class="col-2">
+          <a href="doc.html" target="_blank"><span class="badge badge-secondary">Documentation</span></a>
+        </div>
+      </div>
+      <div id="nav" class="row text-center">
+        <div class="col-2"></div>
+        <div class="col-4">
+          <div id="analyze-nodes" class="btn-group mr-4" role="group">
+            <button id="show-node-alerts" type="button" class="btn btn-sm btn-light">Alerts</button>
+            <button id="show-node-cost" type="button" class="btn btn-sm btn-light">Cost</button>
+            <button id="show-node-blocker" type="button" class="btn btn-sm btn-light">Blocker</button>
           </div>
         </div>
-        <div class="col-2">
-          <a href="doc.html" target="_blank"><button id="doc" type="button" class="btn btn-sm btn-secondary">Documentation</button></a>
+        <div class="col-4">
+            <div id="analyze-edges" class="btn-group" role="group">
+              <button id="show-data-size" type="button" class="btn btn-sm btn-light">Size</button>
+              <button id="show-data-rows" type="button" class="btn btn-sm btn-light">Rows</button>
+              <button id="show-data-width" type="button" class="btn btn-sm btn-light">Width</button>
+            </div>
         </div>
+        <div class="col-2"></div>
       </div>
 
       <div class="row">
