@@ -15,6 +15,9 @@ $(document).ready(function () {
 <p>{{#each node.info}} {{this}}<br> {{/each}}</p>
 <p>{{node.estimates.output-rows}} rows, {{output-size}}</p>
 <p>Relative cost: {{cost}}%</p>
+{{#if node.alert.type}}
+<p class=&quot;plan-alert plan-alert-{{node.alert.type}}&quot;><i class=&quot;material-icons md-18&quot;>{{node.alert.type}}</i>&nbsp; {{node.alert.msg}}</p>
+{{/if}}
 `);
 
     node_template = Handlebars.compile(`

@@ -59,6 +59,16 @@ var parse_plan = function (explain_output) {
         }
     }
 
+    // Adjust levels to reflect actual tree level.
+    var nodes = [plan[0]];
+    while (nodes.length !== 0) {
+        var tmp = nodes.pop();
+        for (const cid of tmp['children']) {
+            plan[cid]['level'] = tmp['level'] + 1;
+            nodes.push(plan[cid]);
+        }
+    }
+
     return plan;
 };
 
@@ -72,7 +82,9 @@ var is_operator = function (step) {
 
 // Redshift operators
 var R_SEQ_SCAN = /XN\s+(Seq\s+Scan)\s+on\s+(\w+)/i;
-var R_JOIN = /XN\s+(Nested\s+Loop|Hash\s+Join|Hash\s+Right\s+Join|Hash\s+NOT\s+IN\sJoin|Merge\s+Join)\s+(\w+)/i;
+var R_JOIN_LOOP = /XN\s+(Nested\s+Loop)\s+(\w+)/i;
+var R_JOIN_MERGE = /XN\s+(Merge\s+Join)\s+(\w+)/i;
+var R_JOIN_HASH = /XN\s+(Hash\s+Join|Hash\s+Right\s+Join|Hash\s+NOT\s+IN\sJoin)\s+(\w+)/i;
 var R_HASH = /XN\s+(Hash$)/i;
 var R_AGGR = /XN\s+(Aggregate$|HashAggregate|GroupAggregate)/i;
 var R_SORT = /XN\s+(Merge$|Sort$)/i;
@@ -84,32 +96,32 @@ var R_UNIQUE = /XN\s+(Unique)/i;
 var R_LIMIT = /XN\s+(Limit$)/i;
 var R_WINDOW = /XN\s+(Window)/i;
 var R_RESULT = /XN\s+(Result)/i;
-//var R_SUBPLAN = /XN/i;
 var R_NETWORK = /XN\s+(Network$)/i;
 var R_MATERIALIZE = /XN\s(Materialize)/i;
 // TODO: Spectrum operators
 
-var mk_operator = function (type, parser, matches) {
-    return {'type': type, 'parser': parser, 'matches': matches};
+var mk_operator = function (type, subtype, parser, matches) {
+    return {'type': type, 'subtype': subtype, 'parser': parser, 'matches': matches};
 };
 
 var OPERATORS = [
-    mk_operator('SCAN', R_SEQ_SCAN, ['op', 'relation']),
-    mk_operator('JOIN', R_JOIN, ['op', 'dist']),
-    mk_operator('JOIN_AGGR', R_HASH, ['op']),
-    mk_operator('AGGR', R_AGGR, ['op']),
-    mk_operator('SORT', R_SORT, ['op']),
-    mk_operator('SUBQ', R_SUBQUERY, ['op', 'relation']),
-    mk_operator('APND', R_APPEND, ['op']),
-    mk_operator('INTR', R_INTERSECT, ['op', 'dist']),
-    mk_operator('EXCP', R_EXCEPT, ['op']),
-    mk_operator('UNIQ', R_UNIQUE, ['op']),
-    mk_operator('LIMT', R_LIMIT, ['op']),
-    mk_operator('WIND', R_WINDOW, ['op']),
-    mk_operator('RSLT', R_RESULT, ['op']),
-    //R_SUBPLAN,
-    mk_operator('NETW', R_NETWORK, ['op']),
-    mk_operator('MTRZ', R_MATERIALIZE, ['op'])
+    mk_operator('SCAN', 'SCAN', R_SEQ_SCAN, ['op', 'relation']),
+    mk_operator('JOIN', 'LOOP', R_JOIN_LOOP, ['op', 'dist']),
+    mk_operator('JOIN', 'MRGE', R_JOIN_MERGE, ['op', 'dist']),
+    mk_operator('JOIN', 'HASH', R_JOIN_HASH, ['op', 'dist']),
+    mk_operator('JOIN_AGGR', 'JOIN_AGGR', R_HASH, ['op']),
+    mk_operator('AGGR', 'AGGR', R_AGGR, ['op']),
+    mk_operator('SORT', 'SORT', R_SORT, ['op']),
+    mk_operator('SUBQ', 'SUBQ', R_SUBQUERY, ['op', 'relation']),
+    mk_operator('APND', 'APND', R_APPEND, ['op']),
+    mk_operator('INTR', 'INTR', R_INTERSECT, ['op', 'dist']),
+    mk_operator('EXCP', 'EXCP', R_EXCEPT, ['op']),
+    mk_operator('UNIQ', 'UNIQ', R_UNIQUE, ['op']),
+    mk_operator('LIMT', 'LIMT', R_LIMIT, ['op']),
+    mk_operator('WIND', 'WIND', R_WINDOW, ['op']),
+    mk_operator('RSLT', 'RSLT', R_RESULT, ['op']),
+    mk_operator('NETW', 'NETW', R_NETWORK, ['op']),
+    mk_operator('MTRZ', 'MTRZ', R_MATERIALIZE, ['op'])
 ];
 
 var parse_operator = function (step) {
@@ -123,6 +135,7 @@ var parse_operator = function (step) {
         let result = match_operator(op, operator);
         if (result['match']) {
             node['type'] = operator['type'];
+            node['subtype'] = operator['subtype'];
             $.extend(node, result['result']);
             parse_success = true;
             break;

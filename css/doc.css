@@ -29,14 +29,12 @@ header {
     text-align: center;
     font-family: 'Palatino';
     color: #555555;
-    text-shadow: 0px 0px 3px #333333,
-                 1px 1px 6px rgba(0, 0, 0, 0.75);
 }
 
 header h1 {
     margin: 0;
     font-weight: 400;
-    font-size: 48pt;
+    font-size: 36pt;
 }
 
 article {
@@ -83,4 +81,9 @@ img {
     margin-bottom: 2em;
     border-radius: 4px;
     box-shadow: 2px 2px 4px 2px #c0c0c0;
+}
+
+ul {
+    list-style-position: inside;
+    line-height: 1.75;
 }

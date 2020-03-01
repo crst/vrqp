@@ -23,6 +23,7 @@ var visualize = function () {
     try {
         var plan = parse_plan(explain_output);
         analyze_plan(plan);
+        analyze_alerts(plan);
         render_plan(plan);
 
         $('#show-node-alerts').click(mk_toggle(show_node_alert, plan, 'nodes')).click();

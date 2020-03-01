@@ -2,7 +2,7 @@
 <html lang="en-US">
   <head>
     <meta charset="utf-8">
-    <title>Visualize Redshift Query Plans - Documentation [EXPERIMENTAL-201902-2]</title>
+    <title>Visualize Redshift Query Plans - Documentation [BETA-202003-01]</title>
 
     <link rel="stylesheet" href="css/common.css" type="text/css">
     <link rel="stylesheet" href="css/doc.css" type="text/css">
@@ -22,30 +22,56 @@
       <section>
         <hr />
         <h2>Add a new query plan</h2>
-        <img src="img/doc-0.png" title="Start" />
+        <img src="img/example_input.png" title="Add a new query plan" />
 
-        <p>Paste your query plan or choose one of the examples.</p>
+        <p>Paste the <code>EXPLAIN</code> output from your query or
+          choose one of the examples.</p>
+
+        <p>Currently supported:
+          <ul>
+            <li>Only non-verbose <code>EXPLAIN</code> output.</li>
+            <li>Most regular Redshift operators should be supported,
+            please create
+            an <a href="https://github.com/crst/vrqp/issues"
+            target="_blank" rel="noreferrer">issue</a> for missing
+            ones.</li>
+            <li>Redshift Spectrum operators are not yet implemented.</li>
+          </ul>
+        </p>
       </section>
 
 
       <!-- ################################################################# -->
       <section>
         <hr />
-        <h2>Visualize the plan</h2>
-        <img src="img/doc-1.png" title="Visualization" />
+        <h2>Visualization</h2>
+        <img src="img/example_plan.png" title="Visualization" />
 
-        <p>A tree display of the plan will be generated.</p>
-      </section>
+        <p>A tree display of the plan will be generated. A few
+          different modes to highlight query operators and data flows
+          are supported.</p>
 
+        <div style="height: 12em;"></div>
 
-      <!-- ################################################################# -->
-      <section>
-        <hr />
-        <h2>Analyze the plan</h2>
-        <img src="img/doc-2.png" title="Analyzing" />
+        <p>Operator highlight modes:
+          <ul>
+            <li><i>Alerts</i>: simple rule-based heuristics, hover the
+            node for some more information.</li>
+            <li><i>Cost</i>: estimated cost (time based) from the
+            planner to return the last row.</li>
+            <li><i>Blocker</i>: estimated cost (time based) from the
+            planner to return the first row.</li>
+          </ul>
+        </p>
 
-        <p>Highlight which parts of the plan are the bottleneck of the
-        query.</p>
+        <p>Data highlight modes:
+          <ul>
+            <li><i>Size</i>: estimated data size from the planner (<code># Rows &times; Width</code>).</li>
+            <li><i>Rows</i>: estimated number of rows from the planner.</li>
+            <li><i>Width</i>: estimated size per row from the
+            planner.</li>
+          </ul>
+        </p>
       </section>
 
     </article>

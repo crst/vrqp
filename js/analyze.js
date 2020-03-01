@@ -58,6 +58,66 @@ var analyze_plan = function (tree) {
     }
 };
 
+var analyze_alerts = function (tree) {
+    // Simple rule based heuristics.
+
+    for (node_id in tree) {
+        var node = tree[node_id];
+
+        alert = {'type': undefined, 'msg': ''};
+        if (node['type'] === 'JOIN') {
+            var rows_outer = tree[node['children'][0]]['estimates']['rows'];
+            var size_outer = tree[node['children'][0]]['estimates']['output-size'];
+            var rows_inner = tree[node['children'][1]]['estimates']['rows'];
+            var size_inner = tree[node['children'][1]]['estimates']['output-size'];
+
+            if (node['subtype'] === 'MRGE' && node['dist'].includes('NONE')) {
+                alert['type'] = 'thumb_up';
+                alert['msg'] = 'Matching dist and sort keys, great!';
+            } else if (node['subtype'] === 'LOOP' && rows_outer > Math.pow(10, 5) && rows_inner > Math.pow(10, 5)) {
+                alert['type'] = 'warning';
+                alert['msg'] = 'Nested Loop join with large tables (both 100k+ rows), possibly review the join condition!';
+            } else if (node['subtype'] === 'LOOP' && rows_inner > Math.pow(10, 4) && rows_inner > Math.pow(10, 4)) {
+                alert['type'] = 'info';
+                alert['msg'] = 'Nested Loop join with rather large tables (both 10k+ rows), possibly review the join condition!';
+            } else if (node['subtype'] === 'LOOP') {
+                alert['type'] = 'check';
+                alert['msg'] = 'Nested Loop join with small table(s), probably fine.';
+            } else if (node['dist'].includes('NONE')) {
+                alert['type'] = 'thumb_up';
+                alert['msg'] = 'No data redistribution, good!';
+            } else if (node['dist'] === 'DS_DIST_INNER' || node['dist'] === 'DS_DIST_OUTER') {
+                alert['type'] = 'check';
+                alert['msg'] = 'Redistributing one table, should be fine.';
+            } else if (node['dist'] === 'DS_DIST_ALL_INNER') {
+                alert['type'] = 'info';
+                alert['msg'] = 'Redistributing data to a single node, why?';
+            } else if (node['dist'] === 'DS_DIST_BOTH') {
+                alert['type'] = 'info';
+                alert['msg'] = 'Redistributing both tables, why?';
+            } else if (node['dist'] === 'DS_BCAST_INNER' && size_inner > Math.pow(1000, 4)) {
+                alert['type'] = 'warning';
+                alert['msg'] = 'Broadcasting a large table (1GB+), possibly review the join condition!';
+            } else if (node['dist'] === 'DS_BCAST_INNER') {
+                alert['type'] = 'check';
+                alert['msg'] = 'Broadcasting a small table, this is probably fine.'
+            }
+        }
+
+        if (node['type'] === 'SCAN' || node['type'] === 'SUBQ') {
+            if (node['relation'].includes('volt_tt')) {
+                alert['type'] = 'warning'
+                alert['msg'] = 'Writes a temporary table to disk!';
+            } else if (node['relation'].includes('volt_dt')) {
+                alert['type'] = 'thumb_up';
+                alert['msg'] = 'Temporary table in memory, good.'
+            }
+        }
+
+        node['alert'] = alert;
+    }
+};
+
 
 // ----------------------------------------------------------------------------
 // UI functions.
@@ -65,7 +125,7 @@ var analyze_plan = function (tree) {
 var highlight_nodes = function (data) {
     for (const node of data) {
         $('#node-' + node['id'] + ' > .operator-content')
-            .addClass('alert-' + node['alert'])
+            .addClass('plan-alert-' + node['alert']['type'])
             .css({'opacity': get_opacity(node['emph'])});
     }
 };
@@ -86,7 +146,7 @@ var get_opacity = function (measure) {
 var reset_nodes = function () {
     $('.operator-content')
         .css({'opacity': 1.0})
-        .removeClass('alert-none alert-1 alert-2 alert-3 alert-4');
+        .removeClass('plan-alert-none plan-alert-thumb_up plan-alert-check plan-alert-info plan-alert-warning');
 };
 var reset_edges = function () {
     $('.edge, .operator')
@@ -98,32 +158,11 @@ var reset_edges = function () {
 // Node analysis.
 
 var show_node_alert = function (tree, highlight) {
-    // Simple rule based heuristics.
-    // TODO: add more/better heuristics.
+    // Highlight heuristics computed by analyze_alerts.
     var highlight_data = [];
     for (node_id in tree) {
         var node = tree[node_id];
-        var confidence = 3;
-        if (node['type'] === 'JOIN') {
-            if (node['op'] === 'Nested Loop' && node['estimates']['cost-last-abs-rel'] > 0.2) {
-                // TODO: depends on the spelling of "Nested Loop",
-                // should be encapsulated by the parser.
-                confidence = 1;
-            } else if (node['dist'] === 'DS_DIST_NONE' || node['dist'] === 'DS_DIST_ALL_NONE') {
-                confidence = 4;
-            } else if (node['dist'] === 'DS_DIST_BOTH') {
-                confidence = 2;
-            } else if (node['estimates']['cost-last-abs-rel'] > 0.9) {
-                confidence = 1;
-            } else {
-                confidence = 2;
-            }
-        } else if (node['type'] === 'SCAN' || node['type'] === 'SUBQ') {
-            if (node['relation'].includes('volt_tt')) {
-                confidence = 1;
-            }
-        }
-        highlight_data.push({'id': node_id, 'alert': confidence, 'emph': 1});
+        highlight_data.push({'id': node_id, 'alert': node['alert'], 'emph': 1});
     }
     highlight_nodes(highlight_data);
 }
@@ -134,7 +173,7 @@ var show_node_cost = function (tree, highlight) {
     var highlight_data = [];
     for (node_id in tree) {
         var measure = tree[node_id]['estimates']['cost-last-abs-rel'];
-        highlight_data.push({'id': node_id, 'alert': 'none', 'emph': measure});
+        highlight_data.push({'id': node_id, 'alert': {'type': 'none'}, 'emph': measure});
     }
     highlight_nodes(highlight_data);
 };
@@ -146,7 +185,7 @@ var show_node_blocker = function (tree, highlight) {
     var highlight_data = [];
     for (node_id in tree) {
         var measure = tree[node_id]['estimates']['cost-first-abs-rel'];
-        highlight_data.push({'id': node_id, 'alert': 'none', 'emph': measure});
+        highlight_data.push({'id': node_id, 'alert': {'type': 'none'}, 'emph': measure});
     }
     highlight_nodes(highlight_data);
 };
