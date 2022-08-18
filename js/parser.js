@@ -83,7 +83,7 @@ var is_operator = function (step) {
 // Redshift operators
 var R_SEQ_SCAN = /XN\s+(Seq\s+Scan)\s+on\s+(\w+)/i;
 var R_JOIN_LOOP = /XN\s+(Nested\s+Loop)\s+(\w+)/i;
-var R_JOIN_MERGE = /XN\s+(Merge\s+Join)\s+(\w+)/i;
+var R_JOIN_MERGE = /XN\s+(Merge\s+Join|Merge\s+Right\s+Join|Merge\s+Left\s+Join)\s+(\w+)/i;
 var R_JOIN_HASH = /XN\s+(Hash\s+Join|Hash\s+Right\s+Join|Hash\s+Left\s+Join|Hash\s+NOT\s+IN\sJoin)\s+(\w+)/i;
 var R_HASH = /XN\s+(Hash$)/i;
 var R_AGGR = /XN\s+(Aggregate$|HashAggregate|GroupAggregate)/i;
