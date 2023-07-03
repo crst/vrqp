@@ -26,10 +26,20 @@
 // Line 4 is a child node for the merge join from line 2.
 // Line 5 is another child node for the merge join from line 2.
 
+var clean_step_string = function (step) {
+    // exporting from EXPLAIN from tableplus can add unnecessary quotation marks that breaks standard parsing
+    step = step.replaceAll('""','"')
+    if (step[0] = '"') {
+        step = step.slice(1).slice(0, -1)
+    }
+    return step
+}
 
 var parse_plan = function (explain_output) {
-    var steps = explain_output.split('\n').filter(step => step != '');
+    var steps = explain_output.split('\n').filter(step => step != '').map(step => clean_step_string(step));
     steps[0] = '-> ' + steps[0]; // Avoid special case for the root node.
+
+    // fix strange quotation mark from tableplus copy
 
     var plan = {};
     var node_id = 0;
