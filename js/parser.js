@@ -39,8 +39,6 @@ var parse_plan = function (explain_output) {
     var steps = explain_output.split('\n').filter(step => step != '').map(step => clean_step_string(step));
     steps[0] = '-> ' + steps[0]; // Avoid special case for the root node.
 
-    // fix strange quotation mark from tableplus copy
-
     var plan = {};
     var node_id = 0;
     for (const step of steps) {
