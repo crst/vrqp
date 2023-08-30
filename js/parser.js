@@ -98,7 +98,11 @@ var R_WINDOW = /XN\s+(Window)/i;
 var R_RESULT = /XN\s+(Result)/i;
 var R_NETWORK = /XN\s+(Network$)/i;
 var R_MATERIALIZE = /XN\s(Materialize)/i;
-// TODO: Spectrum operators
+// Spectrum operators
+var S_S3_SEQ_SCAN = /(S3 Seq Scan)\s+([\w|\.]+)/i;
+var S_S3_QUERY_SCAN = /XN\s+(S3\s+Query\s+Scan)\s+(\w+)/i;
+var S_PARTITION_SCAN = /XN\s+(Seq\s+Scan\s+PartitionInfo)\s+of\s+([\w|\.]+)/i;
+var S_PARTITION_LOOP = /XN\s+(Partition\s+Loop)/i;
 
 var mk_operator = function (type, subtype, parser, matches) {
     return {'type': type, 'subtype': subtype, 'parser': parser, 'matches': matches};
@@ -121,7 +125,12 @@ var OPERATORS = [
     mk_operator('WIND', 'WIND', R_WINDOW, ['op']),
     mk_operator('RSLT', 'RSLT', R_RESULT, ['op']),
     mk_operator('NETW', 'NETW', R_NETWORK, ['op']),
-    mk_operator('MTRZ', 'MTRZ', R_MATERIALIZE, ['op'])
+    mk_operator('MTRZ', 'MTRZ', R_MATERIALIZE, ['op']),
+
+    mk_operator('SCAN', 'S3', S_S3_SEQ_SCAN, ['op', 'relation']),
+    mk_operator('SCAN', 'S3', S_S3_QUERY_SCAN, ['op', 'relation']),
+    mk_operator('SCAN', 'S3', S_PARTITION_SCAN, ['op', 'relation']),
+    mk_operator('LOOP', 'S3', S_PARTITION_LOOP, ['op']),
 ];
 
 var parse_operator = function (step) {

@@ -92,6 +92,7 @@ body {
     padding-left: 0;
     list-style: none;
     text-align: center;
+    overflow-wrap: anywhere;
 }
 
 .tree li {
